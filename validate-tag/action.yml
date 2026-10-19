@@ -1,0 +1,30 @@
+name: Validate release tag
+description: Check that a release tag (vX.Y.Z) matches __version__ in a Python file
+
+inputs:
+  tag:
+    description: Release tag (e.g. v1.2.3)
+    required: true
+  version-file:
+    description: Python file that defines __version__ (e.g. mypackage/__init__.py)
+    required: true
+
+outputs:
+  version:
+    description: The version, normalized as PyPI shows it (e.g. 0.2.0rc1)
+    value: ${{ steps.validate.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - uses: astral-sh/setup-uv@v10.3.0
+
+    - name: Validate the tag against the code version
+      id: validate
+      shell: bash
+      env:
+        TAG: ${{ inputs.tag }}
+        VERSION_FILE: ${{ inputs.version-file }}
+      run: >-
+        uv run --no-project --with "packaging>=24"
+        python "$GITHUB_ACTION_PATH/validate.py" --tag "$TAG" --version-file "$VERSION_FILE"
