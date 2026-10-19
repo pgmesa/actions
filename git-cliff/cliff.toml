@@ -38,7 +38,7 @@ commit_parsers = [
     { message = "^chore\\(deps.*\\)", skip = true },
     { field = "breaking", pattern = "true", group = "<!-- 0 -->💥 Breaking Changes" },
     { message = "^feat", group = "<!-- 1 -->✨ Features" },
-    { message = "^fix", group = "<!-- 2 -->🐞 Bug Fixes" },
+    { message = "^fix", group = "<!-- 2 -->🐛 Bug Fixes" },
     { message = "^perf", group = "<!-- 3 -->⚡ Performance" },
     { message = "^refactor", group = "<!-- 4 -->🚜 Refactor" },
     { message = "^docs?", group = "<!-- 5 -->📖 Documentation" },
