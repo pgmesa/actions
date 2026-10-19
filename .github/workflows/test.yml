@@ -1,0 +1,52 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-tag:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - run: echo '__version__ = "1.2.0-rc.1"' > fixture.py
+
+      - id: match
+        uses: ./validate-tag
+        with:
+          tag: v1.2.0rc1
+          version-file: fixture.py
+
+      - id: mismatch
+        uses: ./validate-tag
+        continue-on-error: true
+        with:
+          tag: v1.2.0
+          version-file: fixture.py
+
+      - name: Check the results
+        run: |
+          test "${{ steps.match.outputs.version }}" = 1.2.0rc1
+          test "${{ steps.mismatch.outcome }}" = failure
+
+  git-cliff:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - id: notes
+        uses: ./git-cliff
+        with:
+          args: --strip header
+
+      - name: Check the result
+        run: |
+          cat "${{ steps.notes.outputs.file }}"
+          test -s "${{ steps.notes.outputs.file }}"
