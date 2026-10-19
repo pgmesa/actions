@@ -1,6 +1,6 @@
 # actions
 
-Composite GitHub Actions for releasing Python packages from a version tag.
+A collection of reusable composite GitHub Actions.
 
 | Action | What it does |
 |---|---|
