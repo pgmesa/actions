@@ -2,7 +2,8 @@
 
 Both are compared as PEP 440 versions, the way pip and PyPI see them: tag
 v0.2.0rc1 matches "0.2.0rc1" and "0.2.0-rc.1", which normalize to the same
-version. The normalized version is written to the step outputs.
+version. The normalized version, and whether it is a pre-release (a, b, rc or
+dev), are written to the step outputs.
 """
 import os
 import ast
@@ -66,6 +67,7 @@ def main():
     if "GITHUB_OUTPUT" in os.environ:
         with open(os.environ["GITHUB_OUTPUT"], "a") as f:
             f.write(f"version={code_version}\n")
+            f.write(f"prerelease={str(code_version.is_prerelease).lower()}\n")
 
 
 if __name__ == "__main__":

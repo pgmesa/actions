@@ -13,6 +13,9 @@ outputs:
   version:
     description: The version, normalized as PyPI shows it (e.g. 0.2.0rc1)
     value: ${{ steps.validate.outputs.version }}
+  prerelease:
+    description: Whether the version is a pre-release (a, b, rc or dev), as 'true' or 'false'
+    value: ${{ steps.validate.outputs.prerelease }}
 
 runs:
   using: composite

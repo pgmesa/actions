@@ -32,6 +32,7 @@ jobs:
       - name: Check the results
         run: |
           test "${{ steps.match.outputs.version }}" = 1.2.0rc1
+          test "${{ steps.match.outputs.prerelease }}" = true
           test "${{ steps.mismatch.outcome }}" = failure
 
   git-cliff:
