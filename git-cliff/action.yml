@@ -1,0 +1,65 @@
+name: git-cliff release notes
+description: Generate release notes or a changelog with git-cliff and a shared default configuration
+
+inputs:
+  config:
+    description: Path to a git-cliff config in the repository; the cliff.toml next to this action by default
+    required: false
+    default: ""
+  args:
+    description: Extra arguments for git-cliff (e.g. --latest --strip header)
+    required: false
+    default: ""
+  output:
+    description: File to write the result to
+    required: false
+    default: git-cliff-output.md
+
+outputs:
+  file:
+    description: Path of the generated file
+    value: ${{ inputs.output }}
+  content:
+    description: Generated content
+    value: ${{ steps.run.outputs.content }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install git-cliff
+      shell: bash
+      env:
+        VERSION: 2.14.2
+      run: |
+        set -euo pipefail
+        name="git-cliff-${VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+        url="https://github.com/orhun/git-cliff/releases/download/v${VERSION}/${name}"
+        dir="$(mktemp -d)"
+        curl -sSLf -o "${dir}/${name}" "$url"
+        curl -sSLf -o "${dir}/${name}.sha512" "${url}.sha512"
+        (cd "$dir" && sha512sum -c "${name}.sha512")
+        tar -xzf "${dir}/${name}" -C "$dir"
+        sudo install "${dir}/git-cliff-${VERSION}/git-cliff" /usr/local/bin/git-cliff
+        git-cliff --version
+
+    - name: Run git-cliff
+      id: run
+      shell: bash
+      env:
+        CONFIG: ${{ inputs.config || format('{0}/cliff.toml', github.action_path) }}
+        ARGS: ${{ inputs.args }}
+        OUTPUT: ${{ inputs.output }}
+      run: |
+        set -euo pipefail
+        if [ ! -d .git ] || [ "$(git rev-parse --is-shallow-repository)" = true ]; then
+          echo "::error::git-cliff needs the full history: use actions/checkout with fetch-depth: 0"
+          exit 1
+        fi
+        # ARGS is split into words on purpose
+        git-cliff --config "$CONFIG" $ARGS --output "$OUTPUT"
+        delimiter="EOF_$(openssl rand -hex 8)"
+        {
+          echo "content<<${delimiter}"
+          cat "$OUTPUT"
+          echo "${delimiter}"
+        } >> "$GITHUB_OUTPUT"

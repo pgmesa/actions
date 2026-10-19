@@ -1,0 +1,53 @@
+# Default git-cliff configuration: release notes for one release, with the
+# message of the (annotated) tag as intro and the commits grouped by type.
+# https://git-cliff.org/docs/configuration
+
+[changelog]
+body = """
+{% if message %}\
+{{ message | trim }}
+{% endif %}\
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim }}
+{% for commit in commits %}
+- {% if commit.scope %}**{{ commit.scope }}:** {% endif %}\
+{% if commit.breaking %}[**breaking**] {% endif %}\
+{{ commit.message | upper_first }}\
+{% endfor %}
+{% endfor %}
+"""
+trim = true
+render_always = true
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+require_conventional = false
+split_commits = false
+# Map common non-conventional prefixes to a type, for older histories
+commit_preprocessors = [
+    { pattern = "^(Add|Added|Implement|Implemented|Create|Created|Integrate|Integrated):?\\s*", replace = "feat: $1 " },
+    { pattern = "^(Fix|Fixed|Ensure|Make sure):?\\s*", replace = "fix: $1 " },
+    { pattern = "^(Improve|Improved|Speed up|Optimize|Optimized):?\\s*", replace = "perf: $1 " },
+    { pattern = "^(Refactor|Refactored|Remove|Removed|Rework|Reworked|Rename|Renamed|Update|Updated):?\\s*", replace = "refactor: $1 " },
+]
+protect_breaking_commits = true
+# The first parser that matches wins: skips go first, the catch-all last.
+# The HTML comments only set the order of the groups
+commit_parsers = [
+    { message = "^chore\\(release\\)", skip = true },
+    { message = "^chore\\(deps.*\\)", skip = true },
+    { message = "^feat", group = "<!-- 0 -->Features" },
+    { message = "^fix", group = "<!-- 1 -->Bug Fixes" },
+    { message = "^perf", group = "<!-- 2 -->Performance" },
+    { message = "^refactor", group = "<!-- 3 -->Refactor" },
+    { message = "^docs?", group = "<!-- 4 -->Documentation" },
+    { message = "^tests?", group = "<!-- 5 -->Testing" },
+    { message = "^(build|ci|chore|style)", group = "<!-- 6 -->Build and Maintenance" },
+    { message = "^revert", group = "<!-- 7 -->Reverts" },
+    { message = ".*", group = "<!-- 8 -->Other" },
+]
+filter_commits = false
+topo_order = false
+topo_order_commits = true
+sort_commits = "oldest"
