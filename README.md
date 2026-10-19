@@ -1,6 +1,6 @@
 # actions
 
-Composite GitHub Actions shared by my projects.
+Composite GitHub Actions for releasing Python packages from a version tag.
 
 | Action | What it does |
 |---|---|
@@ -24,26 +24,35 @@ jobs:
         with:
           fetch-depth: 0  # git-cliff needs the history and the tags
 
-      - uses: pgmesa/actions/validate-tag@validate-tag/v1.0.0
+      - id: tag
+        uses: pgmesa/actions/validate-tag@validate-tag/v1.1.0
         with:
           tag: ${{ github.ref_name }}
           version-file: mypackage/__init__.py
 
       - id: notes
-        uses: pgmesa/actions/git-cliff@git-cliff/v1.0.0
+        uses: pgmesa/actions/git-cliff@git-cliff/v1.1.0
         with:
-          args: --latest --strip header
+          args: --current --strip header
 
-      - run: gh release create "$GITHUB_REF_NAME" --verify-tag --notes-file "${{ steps.notes.outputs.file }}"
+      - run: >-
+          gh release create "$GITHUB_REF_NAME" --verify-tag
+          --notes-file "${{ steps.notes.outputs.file }}"
+          ${{ steps.tag.outputs.prerelease == 'true' && '--prerelease' || '' }}
         env:
           GH_TOKEN: ${{ github.token }}
 ```
 
-`validate-tag` outputs the normalized `version` (`v0.2.0-rc.1` -> `0.2.0rc1`).
-`git-cliff` takes a `config` of the calling repository instead of
-[the default one](git-cliff/cliff.toml) and outputs the generated `file` and
-`content`. To give a release an intro, tag it with a message:
-`git tag -a v1.2.3 -F notes.md`.
+`validate-tag` outputs the normalized `version` (`v0.2.0-rc.1` -> `0.2.0rc1`)
+and whether it is a `prerelease`. `git-cliff` takes a `config` of the calling
+repository instead of [the default one](git-cliff/cliff.toml) and outputs the
+generated `file` and `content`. To give a release an intro, tag it with a
+message: `git tag -a v1.2.3 -F notes.md`.
+
+With `--current` the notes cover the commits since the previous tag, which
+suits pre-releases (rc2 lists what changed since rc1). A stable release should
+list everything since the previous stable one, so leave the pre-release tags
+out of the history: `--current --tag-pattern '^v[0-9]+\.[0-9]+\.[0-9]+$'`.
 
 ## Versioning
 
